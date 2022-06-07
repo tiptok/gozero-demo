@@ -17,8 +17,8 @@ import (
 var (
 	userFieldNames          = builder.RawFieldNames(&User{})
 	userRows                = strings.Join(userFieldNames, ",")
-	userRowsExpectAutoSet   = strings.Join(stringx.Remove(userFieldNames, "`id`", "`create_time`", "`update_time`"), ",")
-	userRowsWithPlaceHolder = strings.Join(stringx.Remove(userFieldNames, "`id`", "`create_time`", "`update_time`"), "=?,") + "=?"
+	userRowsExpectAutoSet   = strings.Join(stringx.Remove(userFieldNames, "`id`", "`create_time`", "`update_time`", "`delete_time`"), ",")
+	userRowsWithPlaceHolder = strings.Join(stringx.Remove(userFieldNames, "`id`", "`create_time`", "`update_time`", "`delete_time`"), "=?,") + "=?"
 
 	cacheUserIdPrefix     = "cache:user:id:"
 	cacheUserMobilePrefix = "cache:user:mobile:"
@@ -26,11 +26,13 @@ var (
 
 type (
 	UserModel interface {
-		Insert(ctx context.Context, data *User) (sql.Result, error)
+		Insert(ctx context.Context, session sqlx.Session, data *User) (sql.Result, error)
 		FindOne(ctx context.Context, id int64) (*User, error)
 		FindOneByMobile(ctx context.Context, mobile string) (*User, error)
-		Update(ctx context.Context, data *User) error
+		Update(ctx context.Context, session sqlx.Session, data *User) error
 		Delete(ctx context.Context, id int64) error
+
+		Trans(ctx context.Context, fn func(context context.Context, session sqlx.Session) error) error
 	}
 
 	defaultUserModel struct {
@@ -61,12 +63,15 @@ func NewUserModel(conn sqlx.SqlConn, c cache.CacheConf) UserModel {
 	}
 }
 
-func (m *defaultUserModel) Insert(ctx context.Context, data *User) (sql.Result, error) {
+func (m *defaultUserModel) Insert(ctx context.Context, session sqlx.Session, data *User) (sql.Result, error) {
 	userMobileKey := fmt.Sprintf("%s%v", cacheUserMobilePrefix, data.Mobile)
 	userIdKey := fmt.Sprintf("%s%v", cacheUserIdPrefix, data.Id)
 	ret, err := m.ExecCtx(ctx, func(ctx context.Context, conn sqlx.SqlConn) (result sql.Result, err error) {
-		query := fmt.Sprintf("insert into %s (%s) values (?, ?, ?, ?, ?, ?, ?, ?, ?)", m.table, userRowsExpectAutoSet)
-		return conn.ExecCtx(ctx, query, data.DeleteTime, data.DelState, data.Version, data.Mobile, data.Password, data.Nickname, data.Sex, data.Avatar, data.Info)
+		query := fmt.Sprintf("insert into %s (%s) values (?, ?, ?, ?, ?, ?, ?, ?)", m.table, userRowsExpectAutoSet)
+		if session != nil {
+			return session.ExecCtx(ctx, query, data.DelState, data.Version, data.Mobile, data.Password, data.Nickname, data.Sex, data.Avatar, data.Info)
+		}
+		return conn.ExecCtx(ctx, query, data.DelState, data.Version, data.Mobile, data.Password, data.Nickname, data.Sex, data.Avatar, data.Info)
 	}, userIdKey, userMobileKey)
 	return ret, err
 }
@@ -108,11 +113,14 @@ func (m *defaultUserModel) FindOneByMobile(ctx context.Context, mobile string) (
 	}
 }
 
-func (m *defaultUserModel) Update(ctx context.Context, data *User) error {
+func (m *defaultUserModel) Update(ctx context.Context, session sqlx.Session, data *User) error {
 	userIdKey := fmt.Sprintf("%s%v", cacheUserIdPrefix, data.Id)
 	userMobileKey := fmt.Sprintf("%s%v", cacheUserMobilePrefix, data.Mobile)
 	_, err := m.ExecCtx(ctx, func(ctx context.Context, conn sqlx.SqlConn) (result sql.Result, err error) {
 		query := fmt.Sprintf("update %s set %s where `id` = ?", m.table, userRowsWithPlaceHolder)
+		if session != nil {
+			return session.ExecCtx(ctx, query, data.DeleteTime, data.DelState, data.Version, data.Mobile, data.Password, data.Nickname, data.Sex, data.Avatar, data.Info)
+		}
 		return conn.ExecCtx(ctx, query, data.DeleteTime, data.DelState, data.Version, data.Mobile, data.Password, data.Nickname, data.Sex, data.Avatar, data.Info, data.Id)
 	}, userIdKey, userMobileKey)
 	return err
@@ -140,4 +148,13 @@ func (m *defaultUserModel) formatPrimary(primary interface{}) string {
 func (m *defaultUserModel) queryPrimary(ctx context.Context, conn sqlx.SqlConn, v, primary interface{}) error {
 	query := fmt.Sprintf("select %s from %s where `id` = ? limit 1", userRows, m.table)
 	return conn.QueryRowCtx(ctx, v, query, primary)
+}
+
+// export logic
+func (m *defaultUserModel) Trans(ctx context.Context, fn func(ctx context.Context, session sqlx.Session) error) error {
+
+	return m.TransactCtx(ctx, func(ctx context.Context, session sqlx.Session) error {
+		return fn(ctx, session)
+	})
+
 }

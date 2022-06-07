@@ -18,8 +18,8 @@ import (
 var (
 	userAuthFieldNames          = builder.RawFieldNames(&UserAuth{})
 	userAuthRows                = strings.Join(userAuthFieldNames, ",")
-	userAuthRowsExpectAutoSet   = strings.Join(stringx.Remove(userAuthFieldNames, "`id`", "`create_time`", "`update_time`"), ",")
-	userAuthRowsWithPlaceHolder = strings.Join(stringx.Remove(userAuthFieldNames, "`id`", "`create_time`", "`update_time`"), "=?,") + "=?"
+	userAuthRowsExpectAutoSet   = strings.Join(stringx.Remove(userAuthFieldNames, "`id`", "`create_time`", "`update_time`", "`delete_time`"), ",")
+	userAuthRowsWithPlaceHolder = strings.Join(stringx.Remove(userAuthFieldNames, "`id`", "`create_time`", "`update_time`", "`delete_time`"), "=?,") + "=?"
 
 	cacheUserAuthIdPrefix              = "cache:userAuth:id:"
 	cacheUserAuthAuthTypeAuthKeyPrefix = "cache:userAuth:authType:authKey:"
@@ -28,11 +28,11 @@ var (
 
 type (
 	UserAuthModel interface {
-		Insert(ctx context.Context, data *UserAuth) (sql.Result, error)
+		Insert(ctx context.Context, session sqlx.Session, data *UserAuth) (sql.Result, error)
 		FindOne(ctx context.Context, id int64) (*UserAuth, error)
 		FindOneByAuthTypeAuthKey(ctx context.Context, authType string, authKey string) (*UserAuth, error)
 		FindOneByUserIdAuthType(ctx context.Context, userId int64, authType string) (*UserAuth, error)
-		Update(ctx context.Context, data *UserAuth) error
+		Update(ctx context.Context, session sqlx.Session, data *UserAuth) error
 		UpdateWithVersion(ctx context.Context, session sqlx.Session, data *UserAuth) error
 		Delete(ctx context.Context, id int64) error
 	}
@@ -62,13 +62,16 @@ func NewUserAuthModel(conn sqlx.SqlConn, c cache.CacheConf) UserAuthModel {
 	}
 }
 
-func (m *defaultUserAuthModel) Insert(ctx context.Context, data *UserAuth) (sql.Result, error) {
+func (m *defaultUserAuthModel) Insert(ctx context.Context, session sqlx.Session, data *UserAuth) (sql.Result, error) {
 	userAuthIdKey := fmt.Sprintf("%s%v", cacheUserAuthIdPrefix, data.Id)
 	userAuthAuthTypeAuthKeyKey := fmt.Sprintf("%s%v:%v", cacheUserAuthAuthTypeAuthKeyPrefix, data.AuthType, data.AuthKey)
 	userAuthUserIdAuthTypeKey := fmt.Sprintf("%s%v:%v", cacheUserAuthUserIdAuthTypePrefix, data.UserId, data.AuthType)
 	ret, err := m.ExecCtx(ctx, func(ctx context.Context, conn sqlx.SqlConn) (result sql.Result, err error) {
-		query := fmt.Sprintf("insert into %s (%s) values (?, ?, ?, ?, ?, ?)", m.table, userAuthRowsExpectAutoSet)
-		return conn.ExecCtx(ctx, query, data.DeleteTime, data.DelState, data.Version, data.UserId, data.AuthKey, data.AuthType)
+		query := fmt.Sprintf("insert into %s (%s) values (?, ?, ?, ?, ?)", m.table, userAuthRowsExpectAutoSet)
+		if session != nil {
+			return session.ExecCtx(ctx, query, data.DelState, data.Version, data.UserId, data.AuthKey, data.AuthType)
+		}
+		return conn.ExecCtx(ctx, query, data.DelState, data.Version, data.UserId, data.AuthKey, data.AuthType)
 	}, userAuthIdKey, userAuthAuthTypeAuthKeyKey, userAuthUserIdAuthTypeKey)
 	return ret, err
 }
@@ -130,12 +133,15 @@ func (m *defaultUserAuthModel) FindOneByUserIdAuthType(ctx context.Context, user
 	}
 }
 
-func (m *defaultUserAuthModel) Update(ctx context.Context, data *UserAuth) error {
+func (m *defaultUserAuthModel) Update(ctx context.Context, session sqlx.Session, data *UserAuth) error {
 	userAuthIdKey := fmt.Sprintf("%s%v", cacheUserAuthIdPrefix, data.Id)
 	userAuthAuthTypeAuthKeyKey := fmt.Sprintf("%s%v:%v", cacheUserAuthAuthTypeAuthKeyPrefix, data.AuthType, data.AuthKey)
 	userAuthUserIdAuthTypeKey := fmt.Sprintf("%s%v:%v", cacheUserAuthUserIdAuthTypePrefix, data.UserId, data.AuthType)
 	_, err := m.ExecCtx(ctx, func(ctx context.Context, conn sqlx.SqlConn) (result sql.Result, err error) {
 		query := fmt.Sprintf("update %s set %s where `id` = ?", m.table, userAuthRowsWithPlaceHolder)
+		if session != nil {
+			return session.ExecCtx(ctx, query, data.DeleteTime, data.DelState, data.Version, data.UserId, data.AuthKey, data.AuthType, data.Id)
+		}
 		return conn.ExecCtx(ctx, query, data.DeleteTime, data.DelState, data.Version, data.UserId, data.AuthKey, data.AuthType, data.Id)
 	}, userAuthIdKey, userAuthAuthTypeAuthKeyKey, userAuthUserIdAuthTypeKey)
 	return err
