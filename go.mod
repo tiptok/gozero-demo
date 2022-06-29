@@ -13,6 +13,8 @@ require (
 	github.com/sony/sonyflake v1.0.0
 	github.com/zeromicro/go-zero v1.3.4
 	google.golang.org/grpc v1.47.0
+	github.com/tiptok/gocomm v1.0.12
+	github.com/go-pg/pg/v10 v10.10.6
 )
 
 require (
@@ -89,3 +91,5 @@ require (
 	sigs.k8s.io/structured-merge-diff/v4 v4.2.1 // indirect
 	sigs.k8s.io/yaml v1.2.0 // indirect
 )
+
+replace github.com/tiptok/gocomm v1.0.12 => D:\\Go\src\learn_project\gocomm
