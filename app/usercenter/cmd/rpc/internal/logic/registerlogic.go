@@ -6,6 +6,8 @@ import (
 	"github.com/zeromicro/go-zero/core/stores/sqlx"
 	"zero-demo/app/usercenter/cmd/model"
 	"zero-demo/app/usercenter/cmd/rpc/usercenter"
+	"zero-demo/app/usercenter/pkg1/db/transaction"
+	"zero-demo/app/usercenter/pkg1/domain"
 	"zero-demo/common/tool"
 	"zero-demo/common/xerr"
 
@@ -32,6 +34,63 @@ func NewRegisterLogic(ctx context.Context, svcCtx *svc.ServiceContext) *Register
 }
 
 func (l *RegisterLogic) Register(in *pb.RegisterReq) (*pb.RegisterResp, error) {
+	conn := l.svcCtx.DefaultDBConn()
+	user, err := l.svcCtx.UserRepository.FindOneByPhone(l.ctx, conn, in.Mobile)
+	if err != nil && err != domain.ErrNotFound {
+		return nil, errors.Wrapf(xerr.NewErrCode(xerr.DB_ERROR), "mobile:%s,err:%v", in.Mobile, err)
+	}
+	if user != nil {
+		return nil, errors.Wrapf(ErrUserAlreadyRegisterError, "Register user exists mobile:%s,err:%v", in.Mobile, err)
+	}
+
+	var userId int64
+	if err := transaction.UseTrans(l.ctx, l.svcCtx.DB, func(ctx context.Context, conn transaction.Conn) error {
+		var err error
+		user := &domain.User{
+			Mobile:   in.Mobile,
+			Nickname: in.Nickname,
+		}
+		if len(user.Nickname) == 0 {
+			user.Nickname = tool.Krand(8, tool.KC_RAND_KIND_ALL)
+		}
+		if len(in.Password) > 0 {
+			user.Password = tool.Md5ByString(in.Password)
+		}
+		user, err = l.svcCtx.UserRepository.Insert(ctx, conn, user)
+		if err != nil {
+			return errors.Wrapf(xerr.NewErrCode(xerr.DB_ERROR), "Register db user Insert err:%v,user:%+v", err, user)
+		}
+		userId = user.Id
+		userAuth := &domain.UserAuth{
+			UserId:   userId,
+			AuthKey:  in.AuthKey,
+			AuthType: in.AuthType,
+		}
+		if _, err := l.svcCtx.UserAuthRepository.Insert(ctx, conn, userAuth); err != nil {
+			return errors.Wrapf(xerr.NewErrCode(xerr.DB_ERROR), "Register db user_auth Insert err:%v,userAuth:%v", err, userAuth)
+		}
+		return err
+	}, true); err != nil {
+		return nil, err
+	}
+
+	//2、Generate the token, so that the service doesn't call rpc internally
+	generateTokenLogic := NewGenerateTokenLogic(l.ctx, l.svcCtx)
+	tokenResp, err := generateTokenLogic.GenerateToken(&usercenter.GenerateTokenReq{
+		UserId: userId,
+	})
+	if err != nil {
+		return nil, errors.Wrapf(ErrGenerateTokenError, "GenerateToken userId : %d", userId)
+	}
+
+	return &usercenter.RegisterResp{
+		AccessToken:  tokenResp.AccessToken,
+		AccessExpire: tokenResp.AccessExpire,
+		RefreshAfter: tokenResp.RefreshAfter,
+	}, nil
+}
+
+func (l *RegisterLogic) RegisterBak(in *pb.RegisterReq) (*pb.RegisterResp, error) {
 	user, err := l.svcCtx.UserModel.FindOneByMobile(l.ctx, in.Mobile)
 	if err != nil && err != model.ErrNotFound {
 		return nil, errors.Wrapf(xerr.NewErrCode(xerr.DB_ERROR), "mobile:%s,err:%v", in.Mobile, err)

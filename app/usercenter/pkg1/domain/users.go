@@ -11,36 +11,31 @@ const (
 	UserNormal
 )
 
-type Users struct {
-	// 唯一标识
-	Id int64 `json:"id"`
-	// 名称
-	Name string `json:"name"`
-	// 手机号
-	Phone string `json:"phone"`
-	// 密码
-	Passwd string `json:"-"`
-	// 用户角色
-	Roles []int64 `json:"roles"`
-	// 1启用  2禁用
-	Status int `json:"status"`
-	// 管理员类型 1:管理员  2：普通员工
-	AdminType int `json:"adminType"`
-	// 创建时间
-	CreateTime time.Time `json:"createTime"`
-	// 更新时间
-	UpdateTime time.Time `json:"updateTime"`
+type User struct {
+	Id         int64
+	CreateTime time.Time
+	UpdateTime time.Time
+	DeleteTime time.Time
+	DelState   int64
+	Version    int64
+	Mobile     string
+	Password   string
+	Nickname   string
+	Sex        int64
+	Avatar     string
+	Info       string
 }
 
 type UsersRepository interface {
-	Save(ctx context.Context, transaction transaction.Conn, dm *Users) (*Users, error)
-	Remove(ctx context.Context, transaction transaction.Conn, dm *Users) (*Users, error)
-	FindOne(ctx context.Context, id int64) (*Users, error)
-	FindOneByPhone(ctx context.Context, phone string) (*Users, error)
-	Find(ctx context.Context, queryOptions map[string]interface{}) (int64, []*Users, error)
+	Update(ctx context.Context, transaction transaction.Conn, dm *User) (*User, error)
+	Insert(ctx context.Context, transaction transaction.Conn, dm *User) (*User, error)
+	Delete(ctx context.Context, transaction transaction.Conn, dm *User) (*User, error)
+	FindOne(ctx context.Context, transaction transaction.Conn, id int64) (*User, error)
+	FindOneByPhone(ctx context.Context, transaction transaction.Conn, phone string) (*User, error)
+	Find(ctx context.Context, transaction transaction.Conn, queryOptions map[string]interface{}) (int64, []*User, error)
 }
 
-func (m *Users) Identify() interface{} {
+func (m *User) Identify() interface{} {
 	if m.Id == 0 {
 		return nil
 	}

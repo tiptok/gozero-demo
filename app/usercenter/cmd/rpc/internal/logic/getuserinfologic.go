@@ -5,6 +5,8 @@ import (
 	"github.com/pkg/errors"
 	"zero-demo/app/usercenter/cmd/model"
 	"zero-demo/app/usercenter/cmd/rpc/usercenter"
+	"zero-demo/app/usercenter/pkg1/db/transaction"
+	"zero-demo/app/usercenter/pkg1/domain"
 	"zero-demo/common/xerr"
 
 	"zero-demo/app/usercenter/cmd/rpc/internal/svc"
@@ -30,7 +32,7 @@ func NewGetUserInfoLogic(ctx context.Context, svcCtx *svc.ServiceContext) *GetUs
 	}
 }
 
-func (l *GetUserInfoLogic) GetUserInfo(in *pb.GetUserInfoReq) (*pb.GetUserInfoResp, error) {
+func (l *GetUserInfoLogic) GetUserInfoBak(in *pb.GetUserInfoReq) (*pb.GetUserInfoResp, error) {
 	user, err := l.svcCtx.UserModel.FindOne(l.ctx, in.Id)
 	if err != nil && err != model.ErrNotFound {
 		return nil, errors.Wrapf(xerr.NewErrCode(xerr.DB_ERROR), "GetUserInfo find user db err , id:%d , err:%v", in.Id, err)
@@ -41,6 +43,27 @@ func (l *GetUserInfoLogic) GetUserInfo(in *pb.GetUserInfoReq) (*pb.GetUserInfoRe
 
 	var respUser usercenter.User
 	_ = copier.Copy(&respUser, user)
+	return &pb.GetUserInfoResp{
+		User: &respUser,
+	}, nil
+}
+
+func (l *GetUserInfoLogic) GetUserInfo(in *pb.GetUserInfoReq) (*pb.GetUserInfoResp, error) {
+	var respUser usercenter.User
+	if err := transaction.UseTrans(l.ctx, l.svcCtx.DB, func(ctx context.Context, conn transaction.Conn) error {
+		var (
+			user *domain.User
+			err  error
+		)
+		user, err = l.svcCtx.UserRepository.FindOne(ctx, conn, in.Id)
+		if err != nil {
+			return err
+		}
+		_ = copier.Copy(&respUser, user)
+		return nil
+	}, false); err != nil {
+		return nil, err
+	}
 	return &pb.GetUserInfoResp{
 		User: &respUser,
 	}, nil
