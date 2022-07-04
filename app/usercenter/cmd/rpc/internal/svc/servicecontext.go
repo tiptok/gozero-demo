@@ -14,9 +14,9 @@ import (
 	"time"
 	"zero-demo/app/usercenter/cmd/model"
 	"zero-demo/app/usercenter/cmd/rpc/internal/config"
-	repository "zero-demo/app/usercenter/pkg1/db/respository"
-	"zero-demo/app/usercenter/pkg1/db/transaction"
-	"zero-demo/app/usercenter/pkg1/domain"
+	"zero-demo/app/usercenter/pkg/db/repository"
+	"zero-demo/app/usercenter/pkg/db/transaction"
+	"zero-demo/app/usercenter/pkg/domain"
 )
 
 type ServiceContext struct {
@@ -24,7 +24,7 @@ type ServiceContext struct {
 	RedisClient        *redis.Redis
 	UserModel          model.UserModel
 	UserAuthModel      model.UserAuthModel
-	UserRepository     domain.UsersRepository
+	UserRepository     domain.UserRepository
 	UserAuthRepository domain.UserAuthRepository
 	DB                 *gorm.DB
 }

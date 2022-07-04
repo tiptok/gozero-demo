@@ -3,12 +3,7 @@ package domain
 import (
 	"context"
 	"time"
-	"zero-demo/app/usercenter/pkg1/db/transaction"
-)
-
-const (
-	UserAdmin = iota + 1
-	UserNormal
+	"zero-demo/app/usercenter/pkg/db/transaction"
 )
 
 type User struct {
@@ -17,18 +12,19 @@ type User struct {
 	UpdateTime time.Time
 	DeleteTime time.Time
 	DelState   int64
-	Version    int64
+	Version    int64 // 版本号
 	Mobile     string
 	Password   string
 	Nickname   string
-	Sex        int64
+	Sex        int64 // 性别 0:男 1:女
 	Avatar     string
 	Info       string
 }
 
-type UsersRepository interface {
-	Update(ctx context.Context, transaction transaction.Conn, dm *User) (*User, error)
+type UserRepository interface {
 	Insert(ctx context.Context, transaction transaction.Conn, dm *User) (*User, error)
+	Update(ctx context.Context, transaction transaction.Conn, dm *User) (*User, error)
+	UpdateWithVersion(ctx context.Context, transaction transaction.Conn, dm *User) (*User, error)
 	Delete(ctx context.Context, transaction transaction.Conn, dm *User) (*User, error)
 	FindOne(ctx context.Context, transaction transaction.Conn, id int64) (*User, error)
 	FindOneByPhone(ctx context.Context, transaction transaction.Conn, phone string) (*User, error)

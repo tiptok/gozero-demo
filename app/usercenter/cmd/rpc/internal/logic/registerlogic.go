@@ -6,8 +6,8 @@ import (
 	"github.com/zeromicro/go-zero/core/stores/sqlx"
 	"zero-demo/app/usercenter/cmd/model"
 	"zero-demo/app/usercenter/cmd/rpc/usercenter"
-	"zero-demo/app/usercenter/pkg1/db/transaction"
-	"zero-demo/app/usercenter/pkg1/domain"
+	"zero-demo/app/usercenter/pkg/db/transaction"
+	"zero-demo/app/usercenter/pkg/domain"
 	"zero-demo/common/tool"
 	"zero-demo/common/xerr"
 

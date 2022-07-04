@@ -6,9 +6,9 @@ import (
 	"github.com/pkg/errors"
 	"github.com/tiptok/gocomm/pkg/cache"
 	"gorm.io/gorm"
-	"zero-demo/app/usercenter/pkg1/db/models"
-	"zero-demo/app/usercenter/pkg1/db/transaction"
-	"zero-demo/app/usercenter/pkg1/domain"
+	"zero-demo/app/usercenter/pkg/db/models"
+	"zero-demo/app/usercenter/pkg/db/transaction"
+	"zero-demo/app/usercenter/pkg/domain"
 )
 
 type UserAuthRepository struct {
@@ -53,14 +53,14 @@ func (repository *UserAuthRepository) Update(ctx context.Context, transaction tr
 
 func (repository *UserAuthRepository) Delete(ctx context.Context, transaction transaction.Conn, dm *domain.UserAuth) (*domain.UserAuth, error) {
 	var (
-		tx        = transaction.DB()
-		UserModel = &models.UserAuth{Id: dm.Identify().(int64)}
+		tx = transaction.DB()
+		m  = &models.UserAuth{Id: dm.Identify().(int64)}
 	)
 	queryFunc := func() (interface{}, error) {
-		tx = tx.Where("id = ?", UserModel.Id).Delete(UserModel)
-		return UserModel, tx.Error
+		tx = tx.Where("id = ?", m.Id).Delete(m)
+		return m, tx.Error
 	}
-	if _, err := repository.Query(queryFunc, UserModel.CacheKeyFunc()); err != nil {
+	if _, err := repository.Query(queryFunc, m.CacheKeyFunc()); err != nil {
 		return dm, err
 	}
 	return dm, nil
@@ -79,7 +79,7 @@ func (repository *UserAuthRepository) FindOne(ctx context.Context, transaction t
 		}
 		return m, tx.Error
 	}
-	cacheModel := new(models.User)
+	cacheModel := new(models.UserAuth)
 	cacheModel.Id = id
 	if err = repository.QueryCache(cacheModel.CacheKeyFunc, m, queryFunc); err != nil {
 		return nil, err
@@ -114,10 +114,10 @@ func (repository *UserAuthRepository) Find(ctx context.Context, transaction tran
 	}
 
 	for _, item := range ms {
-		if user, err := repository.ModelToDomainModel(item); err != nil {
+		if dm, err := repository.ModelToDomainModel(item); err != nil {
 			return 0, dms, err
 		} else {
-			dms = append(dms, user)
+			dms = append(dms, dm)
 		}
 	}
 	return total, dms, nil

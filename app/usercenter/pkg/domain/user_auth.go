@@ -3,7 +3,7 @@ package domain
 import (
 	"context"
 	"time"
-	"zero-demo/app/usercenter/pkg1/db/transaction"
+	"zero-demo/app/usercenter/pkg/db/transaction"
 )
 
 type UserAuth struct {

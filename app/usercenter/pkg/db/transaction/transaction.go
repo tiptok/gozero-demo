@@ -3,16 +3,15 @@ package transaction
 import (
 	"context"
 	"fmt"
-	"github.com/go-pg/pg/v10"
-	"github.com/go-pg/pg/v10/orm"
+	"gorm.io/gorm"
 	"sync"
 )
 
 type Context struct {
 	//启用事务标识
 	beginTransFlag bool
-	rawDb          *pg.DB
-	session        orm.DB
+	db             *gorm.DB
+	session        *gorm.DB
 	lock           sync.Mutex
 }
 
@@ -20,10 +19,7 @@ func (transactionContext *Context) Begin() error {
 	transactionContext.lock.Lock()
 	defer transactionContext.lock.Unlock()
 	transactionContext.beginTransFlag = true
-	tx, err := transactionContext.rawDb.Begin()
-	if err != nil {
-		return err
-	}
+	tx := transactionContext.db.Begin()
 	transactionContext.session = tx
 	return nil
 }
@@ -34,11 +30,8 @@ func (transactionContext *Context) Commit() error {
 	if !transactionContext.beginTransFlag {
 		return nil
 	}
-	if v, ok := transactionContext.session.(*pg.Tx); ok {
-		err := v.Commit()
-		return err
-	}
-	return nil
+	tx := transactionContext.session.Commit()
+	return tx.Error
 }
 
 func (transactionContext *Context) Rollback() error {
@@ -47,37 +40,36 @@ func (transactionContext *Context) Rollback() error {
 	if !transactionContext.beginTransFlag {
 		return nil
 	}
-	if v, ok := transactionContext.session.(*pg.Tx); ok {
-		err := v.Rollback()
-		return err
+	tx := transactionContext.session.Rollback()
+	return tx.Error
+}
+
+func (transactionContext *Context) DB() *gorm.DB {
+	if transactionContext.beginTransFlag && transactionContext.session != nil {
+		return transactionContext.session
 	}
-	return nil
+	return transactionContext.db
 }
 
-func (transactionContext *Context) DB() orm.DB {
-	return transactionContext.session
-}
-
-func NewTransactionContext(db *pg.DB) *Context {
+func NewTransactionContext(db *gorm.DB) *Context {
 	return &Context{
-		rawDb:   db,
-		session: db,
+		db: db,
 	}
 }
 
-type Trans interface {
+type Conn interface {
 	Begin() error
 	Commit() error
 	Rollback() error
-	DB() orm.DB
+	DB() *gorm.DB
 }
 
 // UseTrans when beginTrans is true , it will begin a new transaction
 // to execute the function, recover when  panic happen
 func UseTrans(ctx context.Context,
-	db *pg.DB,
-	fn func(context.Context, Trans) error, beginTrans bool) (err error) {
-	var tx Trans
+	db *gorm.DB,
+	fn func(context.Context, Conn) error, beginTrans bool) (err error) {
+	var tx Conn
 	tx = NewTransactionContext(db)
 	if beginTrans {
 		if err = tx.Begin(); err != nil {

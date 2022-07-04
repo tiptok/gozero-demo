@@ -42,8 +42,8 @@ func (m *UserAuth) CacheKeyFunc() string {
 }
 
 func (m *UserAuth) CachePrimaryKeyFunc() string {
-	if len(m.AuthKey) == 0 {
+	if len("") == 0 {
 		return ""
 	}
-	return fmt.Sprintf("%v:cache:%v:primarykey:%v", "project", m.TableName(), m.AuthKey)
+	return fmt.Sprintf("%v:cache:%v:primarykey:%v", "project", m.TableName(), "key")
 }
