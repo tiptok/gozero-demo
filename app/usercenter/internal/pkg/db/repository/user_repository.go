@@ -7,9 +7,9 @@ import (
 	"github.com/tiptok/gocomm/pkg/cache"
 	"github.com/zeromicro/go-zero/core/stores/sqlx"
 	"gorm.io/gorm"
-	"zero-demo/app/usercenter/pkg/db/models"
-	"zero-demo/app/usercenter/pkg/db/transaction"
-	"zero-demo/app/usercenter/pkg/domain"
+	"zero-demo/app/usercenter/internal/pkg/db/models"
+	"zero-demo/app/usercenter/internal/pkg/db/transaction"
+	"zero-demo/app/usercenter/internal/pkg/domain"
 )
 
 type UserRepository struct {

@@ -1,0 +1,73 @@
+syntax = "v1"
+
+info(
+    title: "xx实例"
+    desc: "xx实例"
+    author: "author"
+    email: "email"
+    version: "v1"
+)
+
+//need login
+@server(
+    prefix: usercenter/v1
+    group: user
+    jwt: JwtAuth
+)
+service usercenter {
+    @handler userGet
+    post /user/:id (UserGetReq) returns (UserGetResp)
+    @handler userSave
+    post /user (UserSaveReq) returns (UserSaveResp)
+    @handler userDelete
+    delete /user/:id (UserDeleteReq) returns (UserDeleteResp)
+    @handler userUpdate
+    put /user/:id (UserUpdateReq) returns (UserUpdateResp)
+    @handler userSearch
+    post /user/search (UserSearchReq) returns (UserSearchResp)
+}
+
+type (
+    UserGetReq {
+        Id int64 `json:"id"`
+    }
+    UserGetResp {
+
+    }
+)
+
+type  (
+    UserSaveReq struct{
+
+    }
+    UserSaveResp struct{}
+)
+
+type(
+    UserDeleteReq struct{
+        Id int64 `json:"id"`
+    }
+    UserDeleteResp struct{}
+)
+
+type(
+    UserUpdateReq struct{
+
+    }
+    UserUpdateResp{}
+)
+
+type(
+    UserSearchReq {
+         PageNumber int64
+         PageSize int64
+    }
+    UserSearchResp{
+        List []UserItem
+        Total int64
+    }
+)
+
+type  UserItem {
+
+}

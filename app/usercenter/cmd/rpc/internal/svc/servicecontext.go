@@ -14,9 +14,9 @@ import (
 	"time"
 	"zero-demo/app/usercenter/cmd/model"
 	"zero-demo/app/usercenter/cmd/rpc/internal/config"
-	"zero-demo/app/usercenter/pkg/db/repository"
-	"zero-demo/app/usercenter/pkg/db/transaction"
-	"zero-demo/app/usercenter/pkg/domain"
+	"zero-demo/app/usercenter/internal/pkg/db/repository"
+	"zero-demo/app/usercenter/internal/pkg/db/transaction"
+	"zero-demo/app/usercenter/internal/pkg/domain"
 )
 
 type ServiceContext struct {

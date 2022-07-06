@@ -6,8 +6,8 @@ import (
 	"github.com/zeromicro/go-zero/core/stores/sqlx"
 	"zero-demo/app/usercenter/cmd/model"
 	"zero-demo/app/usercenter/cmd/rpc/usercenter"
-	"zero-demo/app/usercenter/pkg/db/transaction"
-	"zero-demo/app/usercenter/pkg/domain"
+	"zero-demo/app/usercenter/internal/pkg/db/transaction"
+	domain2 "zero-demo/app/usercenter/internal/pkg/domain"
 	"zero-demo/common/tool"
 	"zero-demo/common/xerr"
 
@@ -36,7 +36,7 @@ func NewRegisterLogic(ctx context.Context, svcCtx *svc.ServiceContext) *Register
 func (l *RegisterLogic) Register(in *pb.RegisterReq) (*pb.RegisterResp, error) {
 	conn := l.svcCtx.DefaultDBConn()
 	user, err := l.svcCtx.UserRepository.FindOneByPhone(l.ctx, conn, in.Mobile)
-	if err != nil && err != domain.ErrNotFound {
+	if err != nil && err != domain2.ErrNotFound {
 		return nil, errors.Wrapf(xerr.NewErrCode(xerr.DB_ERROR), "mobile:%s,err:%v", in.Mobile, err)
 	}
 	if user != nil {
@@ -46,7 +46,7 @@ func (l *RegisterLogic) Register(in *pb.RegisterReq) (*pb.RegisterResp, error) {
 	var userId int64
 	if err := transaction.UseTrans(l.ctx, l.svcCtx.DB, func(ctx context.Context, conn transaction.Conn) error {
 		var err error
-		user := &domain.User{
+		user := &domain2.User{
 			Mobile:   in.Mobile,
 			Nickname: in.Nickname,
 		}
@@ -61,7 +61,7 @@ func (l *RegisterLogic) Register(in *pb.RegisterReq) (*pb.RegisterResp, error) {
 			return errors.Wrapf(xerr.NewErrCode(xerr.DB_ERROR), "Register db user Insert err:%v,user:%+v", err, user)
 		}
 		userId = user.Id
-		userAuth := &domain.UserAuth{
+		userAuth := &domain2.UserAuth{
 			UserId:   userId,
 			AuthKey:  in.AuthKey,
 			AuthType: in.AuthType,

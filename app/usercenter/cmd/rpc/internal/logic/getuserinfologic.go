@@ -5,8 +5,8 @@ import (
 	"github.com/pkg/errors"
 	"zero-demo/app/usercenter/cmd/model"
 	"zero-demo/app/usercenter/cmd/rpc/usercenter"
-	"zero-demo/app/usercenter/pkg/db/transaction"
-	"zero-demo/app/usercenter/pkg/domain"
+	"zero-demo/app/usercenter/internal/pkg/db/transaction"
+	"zero-demo/app/usercenter/internal/pkg/domain"
 	"zero-demo/common/xerr"
 
 	"zero-demo/app/usercenter/cmd/rpc/internal/svc"
