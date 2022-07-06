@@ -1,6 +1,6 @@
 syntax = "proto3";
 
-option go_package ="./pb";
+option go_package ="./pb/user";
 
 package pb;
 
@@ -8,7 +8,7 @@ message UserGetReq {
    int64 Id = 1;
 }
 message UserGetResp{
-
+    UserItem User = 1;
 }
 
 message UserSaveReq {
@@ -41,7 +41,11 @@ message UserSearchResp{
   int64  Total =2;
 }
 message UserItem {
-
+  string Mobile = 2;
+  string Nickname =3;
+  int64 Sex =4;        // 性别 0:男 1:女
+  string Avatar =5;
+  string Info  =6;
 }
 
 service UserService {

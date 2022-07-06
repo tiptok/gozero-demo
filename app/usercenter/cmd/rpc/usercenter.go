@@ -3,6 +3,7 @@ package main
 import (
 	"flag"
 	"fmt"
+	"zero-demo/app/usercenter/cmd/rpc/pb/user"
 	"zero-demo/common/interceptor/rpcserver"
 
 	"zero-demo/app/usercenter/cmd/rpc/internal/config"
@@ -26,10 +27,10 @@ func main() {
 	conf.MustLoad(*configFile, &c)
 	ctx := svc.NewServiceContext(c)
 	srv := server.NewUsercenterServer(ctx)
-
+	userSvr := server.NewUserServiceServer(ctx)
 	s := zrpc.MustNewServer(c.RpcServerConf, func(grpcServer *grpc.Server) {
 		pb.RegisterUsercenterServer(grpcServer, srv)
-
+		user.RegisterUserServiceServer(grpcServer, userSvr)
 		if c.Mode == service.DevMode || c.Mode == service.TestMode {
 			reflection.Register(grpcServer)
 		}
