@@ -11,7 +11,7 @@ type UserAuth struct {
 	CreateTime time.Time
 	UpdateTime time.Time
 	DeleteTime time.Time
-	DelState   int64
+	DelState   int64 `gorm:"softDelete:flag"`
 	Version    int64 // 版本号
 	UserId     int64
 	AuthKey    string // 平台唯一id
@@ -31,6 +31,11 @@ func (m *UserAuth) BeforeCreate(tx *gorm.DB) (err error) {
 
 func (m *UserAuth) BeforeUpdate(tx *gorm.DB) (err error) {
 	m.UpdateTime = time.Now()
+	return
+}
+
+func (m *UserAuth) BeforeDelete(tx *gorm.DB) (err error) {
+	m.DeleteTime = time.Now()
 	return
 }
 

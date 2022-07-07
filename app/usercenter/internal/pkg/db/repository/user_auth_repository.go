@@ -73,7 +73,7 @@ func (repository *UserAuthRepository) FindOne(ctx context.Context, transaction t
 		m   = new(models.UserAuth)
 	)
 	queryFunc := func() (interface{}, error) {
-		tx = tx.Model(m).Where("id = ?", id).Find(m)
+		tx = tx.Model(m).Where("id = ?", id).First(m)
 		if errors.Is(tx.Error, gorm.ErrRecordNotFound) {
 			return nil, domain.ErrNotFound
 		}

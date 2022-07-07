@@ -3,7 +3,9 @@ package transaction
 import (
 	"context"
 	"fmt"
+	"github.com/tiptok/gocomm/pkg/log"
 	"gorm.io/gorm"
+	"runtime/debug"
 	"sync"
 )
 
@@ -83,6 +85,7 @@ func UseTrans(ctx context.Context,
 			} else {
 				err = fmt.Errorf("recoveer from %#v", p)
 			}
+			log.Logger().Error(string(debug.Stack()))
 		} else if err != nil {
 			if e := tx.Rollback(); e != nil {
 				err = fmt.Errorf("transaction failed: %s, rollback failed: %w", err, e)
@@ -93,4 +96,28 @@ func UseTrans(ctx context.Context,
 	}()
 
 	return fn(ctx, tx)
+}
+
+func PaginationAndCount(ctx context.Context, tx *gorm.DB, params map[string]interface{}, v interface{}) (int64, *gorm.DB) {
+	var total int64
+	var enableCounter bool = true
+	if v, ok := params["enableCounter"]; ok {
+		enableCounter = v.(bool)
+	}
+	if enableCounter {
+		tx = tx.Count(&total)
+		if tx.Error != nil {
+			return total, tx
+		}
+	}
+	if v, ok := params["offset"]; ok {
+		tx.Offset(v.(int))
+	}
+	if v, ok := params["limit"]; ok {
+		tx.Limit(v.(int))
+	}
+	if tx = tx.Find(v); tx.Error != nil {
+		return 0, tx
+	}
+	return total, tx
 }

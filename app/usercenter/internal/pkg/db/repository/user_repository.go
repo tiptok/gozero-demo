@@ -58,11 +58,11 @@ func (repository *UserRepository) UpdateWithVersion(ctx context.Context, transac
 		m   *models.User
 		tx  = transaction.DB()
 	)
-	oldVersion := m.Version
-	m.Version += 1
 	if m, err = repository.DomainModelToModel(dm); err != nil {
 		return nil, err
 	}
+	oldVersion := dm.Version
+	m.Version += 1
 	queryFunc := func() (interface{}, error) {
 		tx = tx.Model(m).Where("id = ?", m.Id).Where("version = ?", oldVersion).Updates(m)
 		return nil, tx.Error
@@ -95,7 +95,7 @@ func (repository *UserRepository) FindOne(ctx context.Context, transaction trans
 		m   = new(models.User)
 	)
 	queryFunc := func() (interface{}, error) {
-		tx = tx.Model(m).Where("id = ?", id).Find(m)
+		tx = tx.Model(m).Where("id = ?", id).First(m)
 		if errors.Is(tx.Error, gorm.ErrRecordNotFound) {
 			return nil, domain.ErrNotFound
 		}
@@ -132,25 +132,18 @@ func (repository *UserRepository) FindOneByPhone(ctx context.Context, transactio
 	return repository.ModelToDomainModel(UserModel)
 }
 
-func (repository *UserRepository) Find(ctx context.Context, transaction transaction.Conn, queryOptions map[string]interface{}) (int64, []*domain.User, error) {
+func (repository *UserRepository) Find(ctx context.Context, conn transaction.Conn, queryOptions map[string]interface{}) (int64, []*domain.User, error) {
 	var (
-		tx    = transaction.DB()
+		tx    = conn.DB()
 		ms    []*models.User
 		dms   = make([]*domain.User, 0)
 		total int64
 	)
 	queryFunc := func() (interface{}, error) {
 		tx = tx.Model(&ms).Order("id desc")
-		if v, ok := queryOptions["offset"]; ok {
-			tx.Offset(v.(int))
-		}
-		if v, ok := queryOptions["limit"]; ok {
-			tx.Limit(v.(int))
-		}
-		if tx = tx.Find(&ms); tx.Error != nil {
+		if total, tx = transaction.PaginationAndCount(ctx, tx, queryOptions, &ms); tx.Error != nil {
 			return dms, tx.Error
 		}
-		tx.Count(&total)
 		return dms, nil
 	}
 

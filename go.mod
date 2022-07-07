@@ -14,7 +14,7 @@ require (
 	github.com/tiptok/gocomm v1.0.14
 	github.com/zeromicro/go-zero v1.3.4
 	google.golang.org/grpc v1.47.0
-	gorm.io/gorm v1.23.4
 	gorm.io/driver/mysql v1.3.4
+	gorm.io/gorm v1.23.4
+	gorm.io/plugin/soft_delete v1.1.0
 )
-

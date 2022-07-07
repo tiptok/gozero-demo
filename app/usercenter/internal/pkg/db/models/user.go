@@ -3,6 +3,7 @@ package models
 import (
 	"fmt"
 	"gorm.io/gorm"
+	"gorm.io/plugin/soft_delete"
 	"time"
 )
 
@@ -11,8 +12,8 @@ type User struct {
 	CreateTime time.Time
 	UpdateTime time.Time
 	DeleteTime time.Time
-	DelState   int64
-	Version    int64 // 版本号
+	DelState   soft_delete.DeletedAt `gorm:"softDelete:flag"`
+	Version    int64                 // 版本号
 	Mobile     string
 	Password   string
 	Nickname   string

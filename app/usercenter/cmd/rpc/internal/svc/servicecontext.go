@@ -31,12 +31,6 @@ type ServiceContext struct {
 
 func NewServiceContext(c config.Config) *ServiceContext {
 	sqlConn := sqlx.NewMysql(c.DB.DataSource)
-	//options, err := pg.ParseURL(c.DB.DataSource)
-	//if err != nil {
-	//	log.Fatal(err)
-	//}
-	//postgresql := pg.Connect(options)
-
 	newLogger := logger.New(
 		rawlog.New(os.Stdout, "\r\n", rawlog.LstdFlags), // io writer
 		logger.Config{

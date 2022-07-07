@@ -11,7 +11,7 @@ type User struct {
 	CreateTime time.Time
 	UpdateTime time.Time
 	DeleteTime time.Time
-	DelState   int64
+	DelState   uint32
 	Version    int64 // 版本号
 	Mobile     string
 	Password   string
