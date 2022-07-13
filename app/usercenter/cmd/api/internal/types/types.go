@@ -50,3 +50,51 @@ type UserInfoReq struct {
 type UserInfoResp struct {
 	UserInfo User `json:"userInfo"`
 }
+
+type UserGetReq struct {
+	Id int64 `path:"id"`
+}
+
+type UserGetResp struct {
+	User UserItem `json:"user"`
+}
+
+type UserSaveReq struct {
+	User UserItem `json:"user"`
+}
+
+type UserSaveResp struct {
+}
+
+type UserDeleteReq struct {
+	Id int64 `path:"id"`
+}
+
+type UserDeleteResp struct {
+}
+
+type UserUpdateReq struct {
+	Id   int64    `path:"id"`
+	User UserItem `json:"user"`
+}
+
+type UserUpdateResp struct {
+}
+
+type UserSearchReq struct {
+	PageNumber int64 `json:"pageNumber"`
+	PageSize   int64 `json:"pageSize"`
+}
+
+type UserSearchResp struct {
+	List  []*UserItem `json:"list"`
+	Total int64       `json:"total"`
+}
+
+type UserItem struct {
+	Mobile   string `json:"mobile"`
+	Nickname string `json:"nickname"`
+	Sex      int64  `json:"sex"`
+	Avatar   string `json:"avatar"`
+	Info     string `json:"info"`
+}

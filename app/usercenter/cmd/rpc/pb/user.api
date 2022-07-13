@@ -32,13 +32,13 @@ type (
         Id int64 `json:"id"`
     }
     UserGetResp {
-
+        User UserItem `json:"user"`
     }
 )
 
 type  (
     UserSaveReq struct{
-
+        User UserItem `json:"user"`
     }
     UserSaveResp struct{}
 )
@@ -52,7 +52,8 @@ type(
 
 type(
     UserUpdateReq struct{
-
+        Id int64 `json:"id"`
+        User UserItem `json:"user"`
     }
     UserUpdateResp{}
 )
@@ -69,5 +70,9 @@ type(
 )
 
 type  UserItem {
-
+    Mobile     string `json:"mobile"`
+    Nickname   string `json:"nickname"`
+    Sex        int64 `json:"sex"`
+    Avatar     string `json:"avatar"`
+    Info       string `json:"info"`
 }

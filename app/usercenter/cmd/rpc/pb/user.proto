@@ -12,7 +12,7 @@ message UserGetResp{
 }
 
 message UserSaveReq {
-
+  UserItem User = 1;
 }
 message UserSaveResp{
 
@@ -27,6 +27,7 @@ message UserDeleteResp{
 
 message UserUpdateReq {
   int64 Id = 1;
+  UserItem User = 2;
 }
 message UserUpdateResp{
 

@@ -23,6 +23,31 @@ func RegisterHandlers(server *rest.Server, serverCtx *svc.ServiceContext) {
 				Path:    "/user/login",
 				Handler: user.LoginHandler(serverCtx),
 			},
+			{
+				Method:  http.MethodGet,
+				Path:    "/user/:id",
+				Handler: user.UserGetHandler(serverCtx),
+			},
+			{
+				Method:  http.MethodPost,
+				Path:    "/user",
+				Handler: user.UserSaveHandler(serverCtx),
+			},
+			{
+				Method:  http.MethodDelete,
+				Path:    "/user/:id",
+				Handler: user.UserDeleteHandler(serverCtx),
+			},
+			{
+				Method:  http.MethodPut,
+				Path:    "/user/:id",
+				Handler: user.UserUpdateHandler(serverCtx),
+			},
+			{
+				Method:  http.MethodPost,
+				Path:    "/user/search",
+				Handler: user.UserSearchHandler(serverCtx),
+			},
 		},
 		rest.WithPrefix("/usercenter/v1"),
 	)

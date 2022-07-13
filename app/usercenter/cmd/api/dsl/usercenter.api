@@ -28,6 +28,17 @@ service usercenter {
 	@doc "login"
 	@handler login
 	post /user/login (LoginReq) returns (LoginResp)
+	
+	@handler userGet
+	get /user/:id (UserGetReq) returns (UserGetResp)
+	@handler userSave
+	post /user (UserSaveReq) returns (UserSaveResp)
+	@handler userDelete
+	delete /user/:id (UserDeleteReq) returns (UserDeleteResp)
+	@handler userUpdate
+	put /user/:id (UserUpdateReq) returns (UserUpdateResp)
+	@handler userSearch
+	post /user/search (UserSearchReq) returns (UserSearchResp)
 }
 
 //need login
