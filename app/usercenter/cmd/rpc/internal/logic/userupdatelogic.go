@@ -30,6 +30,10 @@ func (l *UserUpdateLogic) UserUpdate(in *user.UserUpdateReq) (*user.UserUpdateRe
 		if err != nil {
 			return err
 		}
+		user.Nickname = in.User.Nickname
+		user.Avatar = in.User.Avatar
+		user.Sex = in.User.Sex
+		user.Info = in.User.Info
 		_, err = l.svcCtx.UserRepository.Update(l.ctx, conn, user)
 		return err
 	}, true); err != nil {

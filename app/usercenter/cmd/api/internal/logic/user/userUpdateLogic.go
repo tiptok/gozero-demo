@@ -2,6 +2,8 @@ package user
 
 import (
 	"context"
+	"github.com/jinzhu/copier"
+	"zero-demo/app/usercenter/cmd/rpc/userservice"
 
 	"zero-demo/app/usercenter/cmd/api/internal/svc"
 	"zero-demo/app/usercenter/cmd/api/internal/types"
@@ -24,7 +26,11 @@ func NewUserUpdateLogic(ctx context.Context, svcCtx *svc.ServiceContext) *UserUp
 }
 
 func (l *UserUpdateLogic) UserUpdate(req *types.UserUpdateReq) (resp *types.UserUpdateResp, err error) {
-	// todo: add your logic here and delete this line
-
-	return
+	var user userservice.UserItem
+	copier.Copy(&user, req.User)
+	_, err = l.svcCtx.UserServiceRpc.UserUpdate(l.ctx, &userservice.UserUpdateReq{Id: req.Id, User: &user})
+	if err != nil {
+		return nil, err
+	}
+	return &types.UserUpdateResp{}, nil
 }

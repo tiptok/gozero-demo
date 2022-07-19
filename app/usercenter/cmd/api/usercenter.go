@@ -3,6 +3,7 @@ package main
 import (
 	"flag"
 	"fmt"
+	"github.com/zeromicro/go-zero/core/logx"
 
 	"zero-demo/app/usercenter/cmd/api/internal/config"
 	"zero-demo/app/usercenter/cmd/api/internal/handler"
@@ -23,6 +24,8 @@ func main() {
 	ctx := svc.NewServiceContext(c)
 	server := rest.MustNewServer(c.RestConf)
 	defer server.Stop()
+
+	logx.DisableStat()
 
 	handler.RegisterHandlers(server, ctx)
 
